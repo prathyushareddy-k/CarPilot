@@ -65,6 +65,7 @@ export interface AppState {
   compareSpecsOpen: boolean;
   customMusts: string[];
   newMust: string;
+  detailCarId: string;
 }
 
 export interface OptItem {
@@ -153,6 +154,7 @@ export interface CarView {
   onCompare: () => void;
   compareStyle: string;
   compareBoxStyle: string;
+  goDetail: () => void;
 }
 
 export interface AlertItem {
@@ -271,6 +273,7 @@ export interface AppView {
   goIntake: () => void;
   goShortlist: () => void;
   goDetail: () => void;
+  openDetail: (id: string) => void;
   goPacket: () => void;
   goPackets: () => void;
   detailSlotSrc: string;
@@ -401,6 +404,19 @@ export interface AppView {
   onDetailSave: () => void;
   detailJustSaved: boolean;
   detailHeartStyle: string;
+  detailName: string;
+  detailSub: string;
+  detailFit: number;
+  detailFitBadgeStyle: string;
+  detailFitLabel: string;
+  detailTco: string;
+  detailOtd: string;
+  detailOtdNote: string;
+  detailDealLabel: string;
+  detailDealPillStyle: string;
+  detailDealNote: string;
+  detailHeadroom: string;
+  detailTradeoff: string;
   gridCols: string;
   compareCols: CompareCol[];
   fitCells: CompareCell[];
