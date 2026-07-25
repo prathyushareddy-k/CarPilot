@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * MCP Server for Lot Agent — Car Shortlisting
+ * MCP Server for CarPilot — Car Shortlisting
  *
  * Exposes three tools:
  *   car_list_all      List every car in the database with optional filters.
@@ -101,7 +101,7 @@ const ListAllInput = z.object({
 });
 server.registerTool("car_list_all", {
     title: "List All Cars",
-    description: `List every car in the Lot Agent database with optional filters.
+    description: `List every car in the CarPilot database with optional filters.
 
 Args:
   - deal_filter ('Good' | 'Fair' | 'Over' | 'any'): Filter by deal quality vs. market comparables. Default: 'any'.
@@ -421,7 +421,7 @@ async function main() {
     }
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    process.stderr.write("Lot Agent car-shortlist-mcp-server running via stdio\n");
+    process.stderr.write("CarPilot car-shortlist-mcp-server running via stdio\n");
 }
 main().catch((err) => {
     process.stderr.write(`Server error: ${err}\n`);

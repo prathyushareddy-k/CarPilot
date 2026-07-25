@@ -1,7 +1,7 @@
 {
   "name": "car-shortlist-mcp-server",
   "version": "1.0.0",
-  "description": "MCP server for shortlisting cars from the Lot Agent database",
+  "description": "MCP server for shortlisting cars from the CarPilot database",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {

@@ -21,7 +21,7 @@ export default function TopBar({ v }: { v: AppView }) {
             <circle cx="16.5" cy="16.5" r=".7"></circle>
           </svg>
         </div>
-        <span style={parseInlineStyle('font-weight:700;font-size:16px;letter-spacing:-.3px;color:#1C1A17;font-family:var(--font-serif,serif);')}>Lot Agent</span>
+        <span style={parseInlineStyle('font-weight:700;font-size:16px;letter-spacing:-.3px;color:#1C1A17;font-family:var(--font-serif,serif);')}>CarPilot</span>
       </button>
       <div style={parseInlineStyle('flex:1;')}></div>
       <div style={parseInlineStyle('display:flex;align-items:center;gap:8px;flex-shrink:0;')}>
