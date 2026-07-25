@@ -17,12 +17,12 @@ export default function ListingDetailScreen({ v }: { v: AppView }) {
           {/* left */}
           <div>
             <div style={parseInlineStyle('width:100%;height:300px;border-radius:12px;overflow:hidden;position:relative;margin-bottom:16px;')}>
-              <ImageSlot src={v.detailSlotSrc} alt="Drop a 2021 Honda CR-V EX photo" />
+              <ImageSlot src={v.detailSlotSrc} alt={'Photo of ' + v.detailName} />
             </div>
             <div style={parseInlineStyle('display:flex;justify-content:space-between;align-items:flex-start;gap:12px;')}>
               <div>
-                <h1 style={parseInlineStyle('font:800 28px/1.15 var(--font-serif,serif);letter-spacing:-.7px;margin:0 0 4px;color:#1C1A17;')}>2021 Honda CR-V EX</h1>
-                <div style={parseInlineStyle('font-size:14px;color:#6B6459;margin-bottom:16px;')}>38,400 mi · AWD · 14 mi away · CarPlay · 1 owner · Peninsula Honda</div>
+                <h1 style={parseInlineStyle('font:800 28px/1.15 var(--font-serif,serif);letter-spacing:-.7px;margin:0 0 4px;color:#1C1A17;')}>{v.detailName}</h1>
+                <div style={parseInlineStyle('font-size:14px;color:#6B6459;margin-bottom:16px;')}>{v.detailSub}</div>
               </div>
               <button onClick={v.onDetailSave} style={parseInlineStyle(v.detailHeartStyle)}>
                 {v.detailHeartGlyph}
@@ -37,15 +37,11 @@ export default function ListingDetailScreen({ v }: { v: AppView }) {
             <h3 style={parseInlineStyle('font:700 15px/1 var(--font-serif,serif);margin:0 0 14px;color:#1C1A17;')}>Fit Score breakdown</h3>
             <div style={parseInlineStyle('background:#fff;border:1px solid #E7E2D9;border-radius:12px;padding:20px;')}>
               <div style={parseInlineStyle('display:flex;align-items:center;gap:14px;margin-bottom:18px;')}>
-                <div
-                  style={parseInlineStyle(
-                    'width:56px;height:56px;border-radius:13px;background:#0F766E;color:#fff;display:flex;align-items:center;justify-content:center;font:800 24px/1 var(--font-mono,monospace);',
-                  )}
-                >
-                  92
+                <div style={parseInlineStyle(v.detailFitBadgeStyle)}>
+                  {v.detailFit}
                 </div>
                 <div>
-                  <div style={parseInlineStyle('font:700 15px/1 var(--font-serif,serif);color:#1C1A17;')}>Strong match for your brief</div>
+                  <div style={parseInlineStyle('font:700 15px/1 var(--font-serif,serif);color:#1C1A17;')}>{v.detailFitLabel}</div>
                   <div style={parseInlineStyle('font-size:13px;color:#6B6459;margin-top:3px;')}>High on the things you weighted most.</div>
                 </div>
               </div>
@@ -62,9 +58,18 @@ export default function ListingDetailScreen({ v }: { v: AppView }) {
                   </div>
                 </Fragment>
               ))}
-              <div style={parseInlineStyle('border-top:1px dashed #E7E2D9;margin-top:6px;padding-top:14px;font-size:13px;line-height:1.5;color:#6B6459;')}>
-                <strong style={parseInlineStyle('color:#1C1A17;')}>Honest tradeoff:</strong> rock-solid reliability and resale, but fuel will run about <strong>$200/mo</strong> — roughly
-                $40 over your stated target. The agent kept it on top because you weighted reliability highest.
+              <div style={parseInlineStyle('display:flex;gap:14px;margin-top:2px;margin-bottom:2px;')}>
+                <div style={parseInlineStyle('display:flex;align-items:center;gap:5px;')}>
+                  <div style={parseInlineStyle('width:10px;height:10px;border-radius:3px;background:#0F766E;flex-shrink:0;')}></div>
+                  <span style={parseInlineStyle('font-size:11px;color:#6B6459;')}>Strong</span>
+                </div>
+                <div style={parseInlineStyle('display:flex;align-items:center;gap:5px;')}>
+                  <div style={parseInlineStyle('width:10px;height:10px;border-radius:3px;background:#A7D9D3;flex-shrink:0;')}></div>
+                  <span style={parseInlineStyle('font-size:11px;color:#6B6459;')}>Moderate</span>
+                </div>
+              </div>
+              <div style={parseInlineStyle('border-top:1px dashed #E7E2D9;margin-top:10px;padding-top:14px;font-size:13px;line-height:1.5;color:#6B6459;')}>
+                <strong style={parseInlineStyle('color:#1C1A17;')}>Honest tradeoff:</strong> {v.detailTradeoff}
               </div>
             </div>
 
@@ -92,27 +97,23 @@ export default function ListingDetailScreen({ v }: { v: AppView }) {
                 <div>
                   <div style={parseInlineStyle('font-size:11px;font-weight:700;letter-spacing:.5px;color:#9C9189;margin-bottom:4px;')}>EST. ALL-IN MONTHLY</div>
                   <div style={parseInlineStyle('font:800 34px/1 var(--font-mono,monospace);color:#1C1A17;letter-spacing:-1px;font-variant-numeric:tabular-nums;')}>
-                    $430<span style={parseInlineStyle('font:600 16px/1 var(--font-mono,monospace);color:#9C9189;letter-spacing:0;')}>/mo</span>
+                    {v.detailTco}<span style={parseInlineStyle('font:600 16px/1 var(--font-mono,monospace);color:#9C9189;letter-spacing:0;')}>/mo</span>
                   </div>
-                  <div style={parseInlineStyle('font-size:12px;color:#9C9189;margin-top:5px;')}>$26,860 out the door · $23,900 asking + tax &amp; fees</div>
+                  <div style={parseInlineStyle('font-size:12px;color:#9C9189;margin-top:5px;')}>{v.detailOtdNote}</div>
                 </div>
               </div>
               <div style={parseInlineStyle('display:flex;align-items:center;gap:8px;margin-bottom:14px;')}>
                 <span style={parseInlineStyle('font-size:12px;font-weight:700;letter-spacing:.6px;color:#9C9189;')}>DEAL JUDGE</span>
               </div>
-              <div
-                style={parseInlineStyle(
-                  'display:inline-flex;align-items:center;gap:8px;background:#DCFCE7;border:1px solid #BBF7D0;border-radius:9px;padding:9px 13px;margin-bottom:16px;',
-                )}
-              >
-                <span style={parseInlineStyle('font:800 15px/1 var(--font-serif,serif);color:#15803D;')}>Good deal</span>
+              <div style={parseInlineStyle(v.detailDealPillStyle)}>
+                <span style={parseInlineStyle('font:800 15px/1 var(--font-serif,serif);')}>{v.detailDealLabel}</span>
               </div>
               <div style={parseInlineStyle('font-size:14px;line-height:1.6;color:#6B6459;margin-bottom:18px;')}>
-                Asking <strong style={parseInlineStyle('color:#1C1A17;')}>$23,900</strong> sits <strong style={parseInlineStyle('color:#1C1A17;')}>$1,100 under</strong> the average of 12 comparable CR-V EX sales nearby in the last 30 days.
+                {v.detailDealNote}
               </div>
               <div style={parseInlineStyle('background:#FBF8F3;border:1px solid #E7E2D9;border-radius:11px;padding:16px;margin-bottom:16px;')}>
                 <div style={parseInlineStyle('font-size:12px;color:#6B6459;font-weight:600;margin-bottom:4px;')}>Estimated negotiation headroom</div>
-                <div style={parseInlineStyle('font:800 30px/1 var(--font-mono,monospace);color:#0F766E;letter-spacing:-.5px;font-variant-numeric:tabular-nums;')}>$700–$1,200</div>
+                <div style={parseInlineStyle('font:800 30px/1 var(--font-mono,monospace);color:#0F766E;letter-spacing:-.5px;font-variant-numeric:tabular-nums;')}>{v.detailHeadroom}</div>
                 <div style={parseInlineStyle('font-size:12px;color:#9C9189;margin-top:2px;')}>below asking, based on days-on-lot &amp; comps</div>
               </div>
               <button

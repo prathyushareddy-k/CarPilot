@@ -170,7 +170,7 @@ export default function ShortlistScreen({ v }: { v: AppView }) {
                 )}
 
                 {/* card body */}
-                <div onClick={v.goDetail} style={parseInlineStyle('display:flex;flex-direction:column;gap:14px;padding:18px;flex:1;cursor:pointer;')}>
+                <div onClick={c.goDetail} style={parseInlineStyle('display:flex;flex-direction:column;gap:14px;padding:18px;flex:1;cursor:pointer;')}>
                   {/* photo */}
                   <div style={parseInlineStyle('width:100%;height:150px;border-radius:12px;flex-shrink:0;overflow:hidden;position:relative;')}>
                     <ImageSlot src={c.slotSrc} alt={c.slotPlaceholder} />
@@ -275,7 +275,7 @@ export default function ShortlistScreen({ v }: { v: AppView }) {
                 {/* CTA */}
                 <div style={parseInlineStyle('padding:12px 18px 16px;background:#fff;border-top:1px solid #F5F1EB;')}>
                   <button
-                    onClick={v.goDetail}
+                    onClick={c.goDetail}
                     style={parseInlineStyle('background:#fff;border:1.5px solid #A7D9D3;color:#0F766E;border-radius:8px;padding:10px 16px;font:700 13px/1 var(--font-serif,serif);cursor:pointer;')}
                   >
                     See full breakdown →

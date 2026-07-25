@@ -38,6 +38,7 @@ const initialState: AppState = {
   compareSpecsOpen: false,
   customMusts: [],
   newMust: '',
+  detailCarId: 'crv22',
 };
 
 export function useAppView(): AppView {
@@ -111,6 +112,11 @@ export function useAppView(): AppView {
       /* noop */
     }
   }
+  function openDetail(id: string) {
+    setState({ detailCarId: id, screen: 'detail' });
+    try { window.scrollTo(0, 0); } catch { /* noop */ }
+  }
+
   function openPacket(id: string, from?: string) {
     setState({ activePacket: id, packetFrom: from || 'packets', screen: 'packet' });
     try {
@@ -422,6 +428,7 @@ export function useAppView(): AppView {
       onCompare: () => toggleCompare(c.id),
       compareStyle: 'display:inline-flex;align-items:center;gap:8px;background:none;border:none;font-family:inherit;font-size:13px;font-weight:600;color:' + (inCmp ? '#0F766E' : '#9C9189') + ';' + (cmpFull ? 'opacity:.4;cursor:not-allowed;pointer-events:none;' : 'cursor:pointer;'),
       compareBoxStyle: 'width:18px;height:18px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;border:2px solid ' + (inCmp ? '#0F766E' : '#C9C4BB') + ';background:' + (inCmp ? '#0F766E' : '#fff') + ';',
+      goDetail: () => openDetail(c.id),
     };
   });
 
@@ -504,9 +511,9 @@ export function useAppView(): AppView {
   const minOtd = Math.min.apply(null, cmp.map(otdNum));
   const otdCells = cmp.map(c => ({ val: c.otd, best: otdNum(c) === minOtd, style: cellBase + (otdNum(c) === minOtd ? winStyle : '') }));
   const costCells = cmp.map(c => ({ val: '$' + monthlyNum(c) + '/mo', best: monthlyNum(c) === minCost, style: cellBase + (monthlyNum(c) === minCost ? winStyle : '') }));
-  const tradeoffCells = cmp.map(c => ({ text: tradeoffs[c.id], style: cellBase }));
+  const tradeoffCells = cmp.map(c => ({ text: tradeoffs[c.id] ?? c.tradeoff ?? '—', style: cellBase }));
   const specLabels = ['Drivetrain', 'Est. fuel', 'Safety', 'Seats', 'Open recalls'];
-  const specRows = specLabels.map((lab, i) => ({ label: lab, cells: cmp.map(c => ({ v: cspecs[c.id][i] })) }));
+  const specRows = specLabels.map((lab, i) => ({ label: lab, cells: cmp.map(c => ({ v: (cspecs[c.id] ?? Array(specLabels.length).fill('—'))[i] })) }));
   const pick = cmp.length ? cmp.reduce((a, b) => (b.fit > a.fit ? b : a)) : carData[0];
   const recText = `The ${pick.name}. You weighted reliability highest, and it's the only one here that stays under your walk-away number — top fit, a genuinely good deal, and the least to worry about after you sign.`;
   const finalizeCells = cmp.map(c => {
@@ -520,22 +527,70 @@ export function useAppView(): AppView {
         (best ? 'background:#0F766E;color:#fff;border:none;box-shadow:0 2px 8px rgba(15,118,110,.22);' : 'background:#fff;color:#0F766E;border:1px solid #A7D9D3;'),
     };
   });
-  const detailSaved = st.saved.includes('crv22');
+  // ── Detail screen helpers ────────────────────────────────────────────────
+  const detailCar = carData.find(c => c.id === st.detailCarId) ?? carData[0];
 
-  // detail fit breakdown
-  const fitBreak = [
-    { label: 'Reliability', note: 'Excellent', pct: '94%', color: '#0F766E' },
-    { label: 'Resale value', note: 'Very strong', pct: '88%', color: '#0F766E' },
-    { label: 'Running cost', note: 'Fuel ~$35/mo over target', pct: '65%', color: '#A7D9D3' },
-    { label: 'Performance & fun', note: 'Adequate, not sporty', pct: '55%', color: '#A7D9D3' },
-  ];
-  const specs = [
-    { k: 'Condition', v: 'Certified pre-owned' }, { k: 'Fuel type', v: 'Gas' },
-    { k: 'Dealership', v: 'CarMax Fremont' }, { k: 'Drivetrain', v: 'AWD' },
-    { k: 'Mileage', v: '29,000 mi' }, { k: 'Safety rating', v: '5-star NHTSA' },
-    { k: 'Open recalls', v: 'None outstanding' }, { k: 'Est. fuel', v: '~$200 / mo' },
-    { k: 'Owners', v: '1, clean title' },
-  ];
+  function buildFitBreak(car: typeof carData[number]) {
+    const n = car.name.toLowerCase();
+    const relBase = (n.includes('toyota') || n.includes('honda') || n.includes('lexus') || n.includes('acura')) ? 93
+      : (n.includes('mazda') || n.includes('subaru')) ? 85
+      : (n.includes('kia') || n.includes('hyundai')) ? 80
+      : (n.includes('tesla')) ? 76
+      : 68;
+    const relPct = Math.min(97, relBase + (car.condition === 'Certified pre-owned' ? 3 : 0));
+
+    const resBase = (n.includes('toyota') || n.includes('honda') || n.includes('lexus')) ? 87
+      : (n.includes('subaru') || n.includes('mazda') || n.includes('tesla')) ? 80
+      : (n.includes('kia') || n.includes('hyundai') || n.includes('acura')) ? 74
+      : 65;
+    const resPct = Math.min(95, resBase + (car.deal === 'Good' ? 2 : 0));
+
+    const isElec = car.fuelType === 'Electric';
+    const isHyb = car.fuelType === 'Hybrid';
+    const runPct = isElec ? 93 : isHyb ? 78 : 62;
+    const tcoNum = +car.tco.replace(/[^0-9]/g, '');
+    const runNote = isElec ? `~$${Math.round(tcoNum * 0.12)}/mo electricity`
+      : isHyb ? '35–45 mpg, low fuel cost'
+      : `~$${Math.round(tcoNum * 0.3)}/mo fuel`;
+
+    const perfPct = isElec ? 83 : isHyb ? 70 : 68;
+    const perfNote = isElec ? 'Instant torque, smooth' : isHyb ? 'Smooth, efficient' : 'Adequate';
+
+    const col = (v: number) => v >= 80 ? '#0F766E' : '#A7D9D3';
+    const relNote = relPct >= 88 ? 'Excellent' : relPct >= 78 ? 'Very good' : 'Good';
+    const resNote = resPct >= 83 ? 'Very strong' : resPct >= 73 ? 'Good' : 'Average';
+    return [
+      { label: 'Reliability', note: relNote, pct: relPct + '%', color: col(relPct) },
+      { label: 'Resale value', note: resNote, pct: resPct + '%', color: col(resPct) },
+      { label: 'Running cost', note: runNote, pct: runPct + '%', color: col(runPct) },
+      { label: 'Performance & fun', note: perfNote, pct: perfPct + '%', color: col(perfPct) },
+    ];
+  }
+
+  function buildSpecs(car: typeof carData[number]) {
+    const n = car.name.toLowerCase();
+    const hasAwd = car.mustHaveKeys?.includes('awd')
+      || car.pros.some(p => p.toLowerCase().includes('awd'))
+      || n.includes(' awd');
+    const is8Seat = ['odyssey', 'sienna', 'pacifica', 'traverse', 'atlas', 'palisade',
+      'telluride', 'highlander', 'ascent', 'pilot', 'sequoia', 'tahoe', 'suburban', 'expedition'].some(x => n.includes(x));
+    return [
+      { k: 'Condition', v: car.condition },
+      { k: 'Fuel type', v: car.fuelType },
+      { k: 'Dealership', v: car.dealer },
+      { k: 'Drivetrain', v: hasAwd ? 'AWD' : 'FWD' },
+      { k: 'Mileage', v: car.miles },
+      { k: 'Safety rating', v: '5-star NHTSA' },
+      { k: 'Open recalls', v: 'None outstanding' },
+      { k: 'Seats', v: is8Seat ? '7–8' : '5' },
+    ];
+  }
+
+  const detailSaved = st.saved.includes(st.detailCarId);
+
+  // detail fit breakdown — derived from selected car
+  const fitBreak = buildFitBreak(detailCar);
+  const specs = buildSpecs(detailCar);
 
   // packet — per-car data
   const packetData: Record<
@@ -691,9 +746,9 @@ export function useAppView(): AppView {
     // nav helpers
     startIntake: () => startIntake(),
     goLanding: () => go('landing'), goIntake: () => go('intake'),
-    goShortlist: () => go('shortlist'), goDetail: () => go('detail'),
-    goPacket: () => openPacket('crv22', 'detail'), goPackets: () => goPackets(),
-    detailSlotSrc: carSrc('crv22'),
+    goShortlist: () => go('shortlist'), goDetail: () => go('detail'), openDetail,
+    goPacket: () => openPacket(st.detailCarId, 'detail'), goPackets: () => goPackets(),
+    detailSlotSrc: carSrc(st.detailCarId),
     packetBack: () => (st.packetFrom === 'detail' ? go('detail') : goPackets()),
     packetBackLabel: st.packetFrom === 'detail' ? '← Back to listing' : '← Back to deal packets',
     packetList, packetCount: packetList.length,
@@ -757,8 +812,37 @@ export function useAppView(): AppView {
     filterSavedStyle: segBase + (st.savedFilter === 'saved' ? 'background:#fff;color:#0F766E;box-shadow:0 1px 3px rgba(0,0,0,.1);' : 'background:transparent;color:#6B6459;'),
     cmpCount, showCmpBar: cmpCount >= 1 && s === 'shortlist', cmpBarLabel: 'Compare (' + cmpCount + ')', cmpSelLabel: cmpCount + ' selected', cmpMaxHint: cmpCount >= 3,
     openCompare: () => openCompare(), clearCompare: () => clearCompare(),
-    detailSaved, detailHeartGlyph: detailSaved ? '♥' : '♡', onDetailSave: () => toggleSave('crv22'), detailJustSaved: st.justSaved === 'crv22',
+    detailSaved, detailHeartGlyph: detailSaved ? '♥' : '♡', onDetailSave: () => toggleSave(st.detailCarId), detailJustSaved: st.justSaved === st.detailCarId,
     detailHeartStyle: 'background:none;border:1px solid ' + (detailSaved ? '#0F766E' : '#E7E2D9') + ';border-radius:10px;cursor:pointer;font-size:20px;line-height:1;padding:8px 13px;font-family:inherit;color:' + (detailSaved ? '#0F766E' : '#9C9189') + ';',
+    detailName: detailCar.name,
+    detailSub: (() => {
+      const hasAwd = detailCar.mustHaveKeys?.includes('awd') || detailCar.pros.some(p => p.toLowerCase().includes('awd'));
+      const hasCp = detailCar.mustHaveKeys?.includes('carplay');
+      return [detailCar.miles, hasAwd ? 'AWD' : null, detailCar.distance, hasCp ? 'CarPlay' : null, detailCar.dealer].filter(Boolean).join(' · ');
+    })(),
+    detailFit: detailCar.fit,
+    detailFitBadgeStyle: 'width:56px;height:56px;border-radius:13px;display:flex;align-items:center;justify-content:center;font:800 24px/1 var(--font-mono,monospace);' + fitBg(detailCar.fit),
+    detailFitLabel: detailCar.fit >= 88 ? 'Strong match for your brief' : detailCar.fit >= 78 ? 'Good match for your brief' : 'Partial match for your brief',
+    detailTco: detailCar.tco,
+    detailOtd: detailCar.otd,
+    detailOtdNote: detailCar.otd + ' out the door',
+    detailDealLabel: ({ Good: 'Good deal', Fair: 'Fair price', Over: 'Overpriced' } as Record<string, string>)[detailCar.deal] ?? detailCar.deal,
+    detailDealPillStyle: (() => {
+      const m: Record<string, string> = { Good: 'background:#DCFCE7;border:1px solid #BBF7D0;color:#15803D;', Fair: 'background:#F5F1EB;border:1px solid #E7E2D9;color:#6B6459;', Over: 'background:#FEE2E2;border:1px solid #FECACA;color:#B91C1C;' };
+      return 'display:inline-flex;align-items:center;gap:8px;border-radius:9px;padding:9px 13px;margin-bottom:16px;' + (m[detailCar.deal] ?? m.Fair);
+    })(),
+    detailDealNote: (() => {
+      const delta = detailCar.dealDelta.replace(/[^0-9]/g, '');
+      const comps = detailCar.dealComps.replace(' comps', '');
+      if (detailCar.deal === 'Good') return `Asking ${detailCar.otd} sits $${delta} under the average of ${comps} comparable listings nearby in the last 30 days.`;
+      if (detailCar.deal === 'Over') return `Asking price sits $${delta} above comparable listings — room to negotiate.`;
+      return `Priced within $${delta} of the average of ${comps} comparable listings nearby — at market, not a steal.`;
+    })(),
+    detailHeadroom: (() => {
+      const otdNum = parseMoney(detailCar.otd);
+      return '$' + Math.round(otdNum * 0.02).toLocaleString() + '–$' + Math.round(otdNum * 0.04).toLocaleString();
+    })(),
+    detailTradeoff: detailCar.tradeoff ?? detailCar.why,
     gridCols, compareCols, fitCells, dealCells, otdCells, costCells, tradeoffCells, specRows, recText, finalizeCells,
     cmpHasCars: cmp.length > 0, cmpEmpty: cmp.length === 0, cmpCountLabel: cmp.length,
     compareSpecsOpen: st.compareSpecsOpen, compareSpecsCaret: st.compareSpecsOpen ? '▲' : '▼', toggleCompareSpecs: () => setState(p => ({ compareSpecsOpen: !p.compareSpecsOpen })),
