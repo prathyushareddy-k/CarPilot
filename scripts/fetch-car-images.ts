@@ -23,6 +23,56 @@ const CARS: { id: string; article: string }[] = [
   { id: 'forester22',article: 'Subaru Forester (fifth generation)' },
   { id: 'equinox22', article: 'Chevrolet Equinox (third generation)' },
   { id: 'rogue20',   article: 'Nissan Rogue (third generation)' },
+  { id: 'accord22', article: 'Honda Accord (tenth generation)' },
+  { id: 'corolla21', article: 'Toyota Corolla (twelfth generation)' },
+  { id: 'altima20', article: 'Nissan Altima' },
+  { id: 'mazda320', article: 'Mazda3' },
+  { id: 'impreza21', article: 'Subaru Impreza' },
+  { id: 'elantra22', article: 'Hyundai Elantra' },
+  { id: 'forte21', article: 'Kia Forte' },
+  { id: 'jetta21', article: 'Volkswagen Jetta' },
+  { id: 'accordh23', article: 'Honda Accord (tenth generation)' },
+  { id: 'prius21', article: 'Toyota Prius' },
+  { id: 'passport21', article: 'Honda Passport' },
+  { id: 'highlander21', article: 'Toyota Highlander' },
+  { id: '4runner19', article: 'Toyota 4Runner' },
+  { id: 'sportage22', article: 'Kia Sportage' },
+  { id: 'telluride22', article: 'Kia Telluride' },
+  { id: 'santafe21', article: 'Hyundai Santa Fe' },
+  { id: 'palisade22', article: 'Hyundai Palisade' },
+  { id: 'cx921', article: 'Mazda CX-9' },
+  { id: 'ascent21', article: 'Subaru Ascent' },
+  { id: 'crosstrek22', article: 'Subaru Crosstrek' },
+  { id: 'traverse21', article: 'Chevrolet Traverse' },
+  { id: 'terrain21', article: 'GMC Terrain' },
+  { id: 'edge21', article: 'Ford Edge' },
+  { id: 'explorer20', article: 'Ford Explorer' },
+  { id: 'cherokee21', article: 'Jeep Grand Cherokee' },
+  { id: 'wrangler20', article: 'Jeep Wrangler (JL)' },
+  { id: 'tiguan21', article: 'Volkswagen Tiguan' },
+  { id: 'atlas21', article: 'Volkswagen Atlas' },
+  { id: 'xc6020', article: 'Volvo XC60' },
+  { id: 'rx35021', article: 'Lexus RX' },
+  { id: 'nx21', article: 'Lexus NX' },
+  { id: 'rdx21', article: 'Acura RDX' },
+  { id: 'murano20', article: 'Nissan Murano' },
+  { id: 'outlander22', article: 'Mitsubishi Outlander' },
+  { id: 'tacoma20', article: 'Toyota Tacoma' },
+  { id: 'tundra19', article: 'Toyota Tundra' },
+  { id: 'f15020', article: 'Ford F-150' },
+  { id: 'silverado20', article: 'Chevrolet Silverado' },
+  { id: 'ridgeline21', article: 'Honda Ridgeline' },
+  { id: 'odyssey21', article: 'Honda Odyssey' },
+  { id: 'sienna21', article: 'Toyota Sienna' },
+  { id: 'pacifica21', article: 'Chrysler Pacifica' },
+  { id: 'model322', article: 'Tesla Model 3' },
+  { id: 'modely22', article: 'Tesla Model Y' },
+  { id: 'bolt22', article: 'Chevrolet Bolt EV' },
+  { id: 'ioniq523', article: 'Hyundai Ioniq 5' },
+  { id: 'ev623', article: 'Kia EV6' },
+  { id: 'leaf20', article: 'Nissan Leaf' },
+  { id: 'machE22', article: 'Ford Mustang Mach-E' },
+  { id: 'id421', article: 'Volkswagen ID.4' },
 ];
 
 // Fallback article titles if the generation-specific one has no image
@@ -39,6 +89,15 @@ const FALLBACKS: Record<string, string> = {
   forester22: 'Subaru Forester',
   equinox22:  'Chevrolet Equinox',
   rogue20:    'Nissan Rogue',
+  accord22:   'Honda Accord',
+  accordh23:  'Honda Accord',
+  corolla21:  'Toyota Corolla',
+  '4runner19': 'Toyota 4Runner',
+  wrangler20: 'Jeep Wrangler',
+  cherokee21: 'Jeep Grand Cherokee (WL)',
+  model322:   'Tesla Model 3',
+  modely22:   'Tesla Model Y',
+  machE22:    'Ford Mustang Mach-E',
 };
 
 const OUTPUT_DIR = path.join(process.cwd(), 'public', 'cars');
@@ -115,11 +174,14 @@ async function fetchCar(id: string, article: string): Promise<void> {
   console.warn(`  ✗  ${id} — not found`);
 }
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 async function main() {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
   console.log(`\nDownloading ${CARS.length} car images from Wikipedia → ${OUTPUT_DIR}\n`);
   for (const { id, article } of CARS) {
     await fetchCar(id, article);
+    await sleep(1500);
   }
   console.log('\nDone.');
 }
