@@ -1,0 +1,15 @@
+{
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true,
+    "example-skills@anthropic-agent-skills": true
+  },
+  "mcpServers": {
+    "car-shortlist": {
+      "command": "/usr/local/bin/node",
+      "args": ["/Users/contractor5/Desktop/Lot_Agent/mcp-server/dist/index.js"],
+      "env": {
+        "DATABASE_URL": "postgresql://lot_agent:lot_agent@localhost:5432/lot_agent"
+      }
+    }
+  }
+}

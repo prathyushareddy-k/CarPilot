@@ -1,0 +1,16 @@
+{
+  "name": "car-shortlist-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for shortlisting cars from the CarPilot database",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "clean": "rm -rf dist"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

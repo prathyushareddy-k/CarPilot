@@ -1,4 +1,4 @@
-# Lot Agent
+# CarPilot
 
 An AI car-buying agent. The user answers a short, plain-language intake, then the agent continuously scans dealer, private-party, and CPO listings, ranks cars against the user's actual priorities, judges whether a deal is good against real comps, and produces a ready-to-use negotiation packet — instead of making the buyer research and compare cars themselves.
 

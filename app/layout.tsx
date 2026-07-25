@@ -24,9 +24,9 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lot Agent",
+  title: "CarPilot",
   description:
-    "Your car-buying agent — works between visits. Answer a few plain questions and your agent handles the rest.",
+    "Your car-buying co-pilot — works between visits. Answer a few plain questions and your agent handles the rest.",
 };
 
 export default function RootLayout({
