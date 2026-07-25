@@ -1,5 +1,6 @@
 import { createElement, useEffect, useRef, useState } from 'react';
 import type { AppState, AppView } from './types';
+import { carListings } from './carData';
 
 const initialState: AppState = {
   screen: 'landing',
@@ -9,7 +10,7 @@ const initialState: AppState = {
   monthly: 450,
   term: 60,
   down: 3000,
-  activePacket: 'crv',
+  activePacket: 'crv22',
   packetFrom: 'packets',
   weights: { reliability: 80, resale: 55, running: 65, performance: 35 },
   usage: ['commute'],
@@ -27,8 +28,8 @@ const initialState: AppState = {
   copied: false,
   alertsOpen: false,
   dismissedAlerts: [],
-  saved: ['crv', 'rav4'],
-  compareSet: ['crv', 'cx5'],
+  saved: ['crv22', 'rav4xle'],
+  compareSet: ['crv22', 'cx522'],
   savedFilter: 'all',
   conditionFilter: 'all',
   fuelFilter: 'all',
@@ -366,56 +367,7 @@ export function useAppView(): AppView {
     return 'border-radius:999px;padding:4px 11px;font-size:12px;font-weight:700;white-space:nowrap;' + map[r];
   };
   const dealLabel: Record<string, string> = { Good: 'Good deal', Fair: 'Fair price', Over: 'Overpriced' };
-  const carData = [
-    {
-      id: 'crv', name: '2021 Honda CR-V EX', miles: '38k mi', distance: '14 mi away', fit: 92, deal: 'Good', tco: '$430', otd: '$26,860', condition: 'Certified pre-owned', fuelType: 'Gas', dealer: 'Peninsula Honda',
-      pros: ['Bulletproof reliability record', 'Roomy for car seats + gear', 'Holds value in 3 years'], cons: ['Not exciting to drive'],
-      why: "Honestly, this is the safe, smart pick for you. You told me reliability matters most — the CR-V is about as dependable as it gets, and this one is a single-owner car priced below comparable listings. The only real catch is fuel cost runs a touch over your target, but on total cost it still comes out ahead.",
-      dealDelta: '−$1,100', dealComps: '12 comps',
-      mustHaveKeys: ['awd', 'carplay', 'backup'],
-      tradeoff: 'Fuel runs about $40/mo over your target — the only real knock.',
-    },
-    {
-      id: 'rav4', name: '2020 Toyota RAV4 LE', miles: '41k mi', distance: '22 mi away', fit: 88, deal: 'Fair', tco: '$455', otd: '$25,400', condition: 'Used', fuelType: 'Hybrid', dealer: 'Bay City Motors',
-      pros: ['Top-tier reliability', 'Great mpg for the class'], cons: ['Priced a bit high right now', 'Base trim feels plain'],
-      why: "Every bit as dependable as the CR-V and a little better on gas. The catch is timing — RAV4 prices are running hot this month, so you'd pay closer to fair value than a steal. Worth watching for a price drop.",
-      dealDelta: '+$200', dealComps: '11 comps',
-      mustHaveKeys: ['awd', 'carplay'],
-      tradeoff: "Priced hot this month, so you'd pay near full value, not a steal.",
-    },
-    {
-      id: 'cx5', name: '2019 Mazda CX-5 Touring', miles: '46k mi', distance: '31 mi away', fit: 81, deal: 'Good', tco: '$390', otd: '$21,400', condition: 'Used', fuelType: 'Gas', dealer: 'Private seller · Oakland',
-      pros: ['Most fun to drive here', 'Nicer cabin than rivals', 'Lowest monthly cost'], cons: ['Tighter rear seat', 'Slightly thirstier'],
-      why: "If driving feel matters to you at all, this is the one to test-drive. It's the cheapest to run on this list and the interior punches above its price. It scores a bit lower only because reliability — your top priority — is good but not Toyota/Honda great.",
-      dealDelta: '−$800', dealComps: '9 comps',
-      mustHaveKeys: ['awd', 'carplay'],
-      tradeoff: 'Reliability is good but not quite Toyota/Honda bulletproof.',
-    },
-    {
-      id: 'forester', name: '2018 Subaru Forester', miles: '52k mi', distance: '19 mi away', fit: 76, deal: 'Over', tco: '$470', otd: '$24,200', condition: 'Certified pre-owned', fuelType: 'Gas', dealer: 'Golden Gate Subaru',
-      pros: ['Standard AWD', 'Excellent visibility'], cons: ['This listing is above market', 'Older infotainment'],
-      why: "Great all-weather pick with standard AWD and famously easy to see out of. I'm flagging it as overpriced though — this specific listing sits above what comparable Foresters are selling for, so I'd only pursue it if they come down.",
-      dealDelta: '+$900', dealComps: '8 comps',
-      mustHaveKeys: ['awd'],
-      tradeoff: 'This listing sits above market — worth it only if the price drops.',
-    },
-    {
-      id: 'niroev', name: '2024 Kia Niro EV Wind', miles: '12 mi (new)', distance: '17 mi away', fit: 84, deal: 'Fair', tco: '$415', otd: '$34,600', condition: 'New', fuelType: 'Electric', dealer: 'Serramonte Kia',
-      pros: ['Cheapest to run — home charging', 'Full factory warranty', 'No maintenance for years'], cons: ['~250 mi range', 'Public charging adds up'],
-      why: "If you can charge at home, this is the quiet dark-horse pick. It's brand new with a full warranty, so there's nothing to worry about for years, and your monthly running cost drops well below the gas cars. The only real question is range — 250 miles is plenty for your commute, less so for long road trips.",
-      dealDelta: 'at market', dealComps: '6 comps',
-      mustHaveKeys: ['carplay', 'backup'],
-      tradeoff: undefined as string | undefined,
-    },
-    {
-      id: 'civic', name: '2024 Honda Civic Sport', miles: '8 mi (new)', distance: '11 mi away', fit: 83, deal: 'Good', tco: '$425', otd: '$28,400', condition: 'New', fuelType: 'Gas', dealer: 'Peninsula Honda',
-      pros: ['Brand-new, nothing to fix', 'Great mpg for a gas car', 'Holds value extremely well'], cons: ['Smaller than the SUVs', 'Firm ride on rough roads'],
-      why: "The safe brand-new option. You get Honda reliability with zero miles and a full warranty, priced right at what comparable new Civics are going for nearby. It's smaller than the crossovers on your list, so it comes down to whether you need the extra cargo room or would rather have something fresh.",
-      dealDelta: '−$200', dealComps: '14 comps',
-      mustHaveKeys: ['carplay', 'backup'],
-      tradeoff: undefined as string | undefined,
-    },
-  ];
+  const carData = carListings;
   const mhLabels: Record<string, string> = { awd: 'AWD', carplay: 'CarPlay', backup: 'Backup cam', mpg: '35+ mpg', thirdrow: 'Third row', manual: 'Manual' };
   const chipStyle = 'display:inline-flex;align-items:center;gap:4px;background:#E6F5F2;border:1px solid #A7D9D3;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700;color:#115E59;';
   const mkSvg = (children: string[]) =>
@@ -438,7 +390,7 @@ export function useAppView(): AppView {
     if (fuel === 'Hybrid') return mkSvg(['M11 20A7 7 0 019.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8a7 7 0 01-8 10z', 'M2 21c0-3 1.9-5.4 5.1-6']);
     return mkSvg(['M12 2.5S6 9.2 6 14a6 6 0 0012 0c0-4.8-6-11.5-6-11.5z']);
   };
-  const carSrc = (id: string) => '/cars/' + id + '.svg';
+  const carSrc = (id: string) => '/cars/' + id + '.jpg';
   const cars = carData.map(c => {
     const isSaved = st.saved.includes(c.id);
     const inCmp = st.compareSet.includes(c.id);
@@ -517,16 +469,32 @@ export function useAppView(): AppView {
   const cellBase = 'padding:16px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;justify-content:center;border-bottom:1px solid #F5F1EB;border-left:1px solid #F5F1EB;';
   const winStyle = 'border-left:3px solid #0F766E;background:#F0FAF9;';
   const tradeoffs: Record<string, string> = {
-    crv: 'Fuel runs about $40/mo over your target — the only real knock.',
-    rav4: 'Priced hot this month, so you’d pay near full value, not a steal.',
-    cx5: 'Reliability is good but not quite Toyota/Honda bulletproof.',
-    forester: 'This listing sits above market — worth it only if the price drops.',
+    crv22: 'Fuel runs about $35/mo over your target — the only real knock.',
+    rav4xle: 'Priced hot this month, so you\'d pay near full value, not a steal.',
+    cx522: 'Reliability is good but not quite Toyota/Honda bulletproof.',
+    forester22: 'Priced at market — little room to negotiate.',
+    escape22h: 'Ford long-term reliability trails Toyota/Honda.',
+    tucson23h: 'At the top of your budget range.',
+    niroev23: 'Public fast-charging adds ~$30–50/mo if you rely on it.',
+    outback22: 'Near your budget ceiling; fuel economy below rivals.',
+    camry22: 'Sedan — no extra cargo height vs. crossovers.',
+    civic21: 'Compact sedan — less cargo space than any crossover here.',
+    equinox22: 'GM reliability below Japanese rivals.',
+    rogue20: '2020 Rogue CVT had documented reliability issues — verify.',
   };
   const cspecs: Record<string, string[]> = {
-    crv: ['AWD', '~$200/mo', '5-star NHTSA', '5', 'None'],
-    rav4: ['AWD', '~$180/mo', '5-star NHTSA', '5', 'None'],
-    cx5: ['AWD', '~$210/mo', '5-star NHTSA', '5', '1 minor'],
-    forester: ['AWD', '~$205/mo', '5-star NHTSA', '5', 'None'],
+    crv22: ['AWD', '~$200/mo', '5-star NHTSA', '5', 'None'],
+    rav4xle: ['AWD', '~$185/mo', '5-star NHTSA', '5', 'None'],
+    cx522: ['AWD', '~$210/mo', '5-star NHTSA', '5', 'None'],
+    forester22: ['AWD', '~$205/mo', '5-star NHTSA', '5', 'None'],
+    escape22h: ['FWD', '~$155/mo', '5-star NHTSA', '5', 'None'],
+    tucson23h: ['AWD', '~$160/mo', '5-star NHTSA', '5', 'None'],
+    niroev23: ['FWD', '~$35/mo', '5-star NHTSA', '5', 'None'],
+    outback22: ['AWD', '~$220/mo', '5-star NHTSA', '5', 'None'],
+    camry22: ['FWD', '~$175/mo', '5-star NHTSA', '5', 'None'],
+    civic21: ['FWD', '~$165/mo', '5-star NHTSA', '5', 'None'],
+    equinox22: ['AWD', '~$195/mo', '5-star NHTSA', '5', 'None'],
+    rogue20: ['AWD', '~$190/mo', '5-star NHTSA', '5', 'None'],
   };
   const gridCols = '150px repeat(' + Math.max(cmp.length, 1) + ', minmax(0, 1fr))';
   const compareCols = cmp.map(c => ({ name: c.name, sub: c.miles + ' · ' + c.distance, best: c.fit === maxFit, slotId: 'car-' + c.id, slotSrc: carSrc(c.id), slotPlaceholder: 'Drop a ' + c.name + ' photo' }));
@@ -540,7 +508,7 @@ export function useAppView(): AppView {
   const specLabels = ['Drivetrain', 'Est. fuel', 'Safety', 'Seats', 'Open recalls'];
   const specRows = specLabels.map((lab, i) => ({ label: lab, cells: cmp.map(c => ({ v: cspecs[c.id][i] })) }));
   const pick = cmp.length ? cmp.reduce((a, b) => (b.fit > a.fit ? b : a)) : carData[0];
-  const recText = 'The ' + pick.name + '. You weighted reliability highest, and it’s the only one here that stays under your walk-away number — top fit, a genuinely good deal, and the least to worry about after you sign.';
+  const recText = `The ${pick.name}. You weighted reliability highest, and it's the only one here that stays under your walk-away number — top fit, a genuinely good deal, and the least to worry about after you sign.`;
   const finalizeCells = cmp.map(c => {
     const best = c.id === pick.id;
     return {
@@ -552,19 +520,19 @@ export function useAppView(): AppView {
         (best ? 'background:#0F766E;color:#fff;border:none;box-shadow:0 2px 8px rgba(15,118,110,.22);' : 'background:#fff;color:#0F766E;border:1px solid #A7D9D3;'),
     };
   });
-  const detailSaved = st.saved.includes('crv');
+  const detailSaved = st.saved.includes('crv22');
 
   // detail fit breakdown
   const fitBreak = [
     { label: 'Reliability', note: 'Excellent', pct: '94%', color: '#0F766E' },
     { label: 'Resale value', note: 'Very strong', pct: '88%', color: '#0F766E' },
-    { label: 'Running cost', note: 'Fuel ~$40/mo over target', pct: '62%', color: '#A7D9D3' },
+    { label: 'Running cost', note: 'Fuel ~$35/mo over target', pct: '65%', color: '#A7D9D3' },
     { label: 'Performance & fun', note: 'Adequate, not sporty', pct: '55%', color: '#A7D9D3' },
   ];
   const specs = [
     { k: 'Condition', v: 'Certified pre-owned' }, { k: 'Fuel type', v: 'Gas' },
-    { k: 'Dealership', v: 'Peninsula Honda' }, { k: 'Drivetrain', v: 'AWD' },
-    { k: 'Mileage', v: '38,400 mi' }, { k: 'Safety rating', v: '5-star NHTSA' },
+    { k: 'Dealership', v: 'CarMax Fremont' }, { k: 'Drivetrain', v: 'AWD' },
+    { k: 'Mileage', v: '29,000 mi' }, { k: 'Safety rating', v: '5-star NHTSA' },
     { k: 'Open recalls', v: 'None outstanding' }, { k: 'Est. fuel', v: '~$200 / mo' },
     { k: 'Owners', v: '1, clean title' },
   ];
@@ -579,92 +547,92 @@ export function useAppView(): AppView {
       scriptLines: string[]; checklist: string[]; outreach: string;
     }
   > = {
-    crv: {
-      name: '2021 Honda CR-V EX', dealer: 'Peninsula Honda', date: 'Jul 8, 2026',
+    crv22: {
+      name: '2022 Honda CR-V EX', dealer: 'CarMax Fremont', date: 'Jul 8, 2026',
       status: 'Ready to send', statusTone: 'green', generated: 'Ready to use today',
-      otdTotal: '$26,180', monthly: '$430/mo', open: '$22,400', settle: '$23,000', walk: '$23,600',
+      otdTotal: '$27,040', monthly: '$435/mo', open: '$25,200', settle: '$25,900', walk: '$26,500',
       worksheet: [
-        { k: 'Asking price', v: '$23,900', color: '#27272a', weight: '600' },
-        { k: 'Negotiated price (target)', v: '$23,000', color: '#1e8a5b', weight: '700' },
-        { k: 'Doc & dealer fees', v: '+ $485', color: '#52525b', weight: '500' },
-        { k: 'Sales tax (est.)', v: '+ $2,012', color: '#52525b', weight: '500' },
-        { k: 'Title & registration', v: '+ $383', color: '#52525b', weight: '500' },
+        { k: 'Asking price', v: '$26,500', color: '#27272a', weight: '600' },
+        { k: 'Negotiated price (target)', v: '$25,900', color: '#1e8a5b', weight: '700' },
+        { k: 'Doc & dealer fees', v: '+ $185', color: '#52525b', weight: '500' },
+        { k: 'Sales tax (est.)', v: '+ $2,265', color: '#52525b', weight: '500' },
+        { k: 'Title & registration', v: '+ $391', color: '#52525b', weight: '500' },
         { k: 'First payment', v: '+ $300', color: '#52525b', weight: '500' },
       ],
       scriptLines: [
-        "I've done my homework — comparable EX trims nearby are selling around $23,000, and this one's been on your lot 41 days. I can do $22,400 today, cash-ready.",
-        "I hear you. I can come up to $23,000 even, out the door — that works for both of us and I can sign this afternoon.",
-        "That's over where the comps put it, so I'll have to pass — but here's my number if anything changes.",
+        "I've done my homework — comparable 2022 CR-V EX CPOs nearby are going for around $25,900, and CarMax's price guarantee means you won't move much. I can do $25,200 today.",
+        "I hear you. Let's land at $25,900 out the door — that's fair on both sides and I can sign today.",
+        "That's over where comps sit, so I'll pass — but reach out if anything changes.",
       ],
       checklist: [
-        'Cold-start the engine — listen for the known VTC actuator rattle on first startup',
-        'Check infotainment screen for flicker or reboot (2021 software bug)',
-        'Confirm AC blows cold at idle, not just while driving',
-        'Inspect rear cargo seal for water staining',
-        'Verify all driver-assist features (lane keep, adaptive cruise) engage',
-        'Ask for service records — timing belt / brake history',
+        'Cold-start and listen for VTC actuator rattle (first 10 seconds on startup)',
+        'Check infotainment for screen flicker or reboot loop (2022 software bug)',
+        'Confirm AC blows cold at idle, not only while moving',
+        'Inspect rear cargo floor seal for water staining',
+        'Verify all driver-assist features engage: lane keep, adaptive cruise, automatic braking',
+        'Ask for CarMax inspection report and any available service records',
       ],
       outreach:
-        "Hi — I'm interested in your 2021 CR-V EX (listing #4471). I'm a serious, financing-ready buyer and can come see it this week.\n\nBased on recent comparable sales nearby, I'd be looking at around $23,000 out the door. If that's workable, I can schedule a test drive and move quickly.\n\nIs the car still available, and are there any service records you can share? Thanks!",
+        "Hi — I'm interested in your 2022 CR-V EX CPO (Stock #29183). I'm a serious, financing-ready buyer and can come in this week.\n\nBased on comparable CPO CR-Vs in the Bay Area, I'd be targeting around $25,900 out the door. If that's workable, let's get a test drive scheduled.\n\nIs the car still available? Thanks!",
     },
-    rav4: {
-      name: '2020 Toyota RAV4 LE', dealer: 'Bay City Motors', date: 'Jul 6, 2026',
+    rav4xle: {
+      name: '2021 Toyota RAV4 XLE', dealer: 'CarMax Oakland', date: 'Jul 6, 2026',
       status: 'Draft', statusTone: 'gray', generated: 'Draft — awaiting your review',
-      otdTotal: '$25,410', monthly: '$455/mo', open: '$22,900', settle: '$23,600', walk: '$24,100',
+      otdTotal: '$29,040', monthly: '$455/mo', open: '$26,800', settle: '$27,700', walk: '$28,500',
       worksheet: [
-        { k: 'Asking price', v: '$23,600', color: '#27272a', weight: '600' },
-        { k: 'Negotiated price (target)', v: '$23,600', color: '#1e8a5b', weight: '700' },
-        { k: 'Doc & dealer fees', v: '+ $499', color: '#52525b', weight: '500' },
-        { k: 'Sales tax (est.)', v: '+ $1,985', color: '#52525b', weight: '500' },
-        { k: 'Title & registration', v: '+ $383', color: '#52525b', weight: '500' },
-        { k: 'First payment', v: '+ $343', color: '#52525b', weight: '500' },
+        { k: 'Asking price', v: '$28,500', color: '#27272a', weight: '600' },
+        { k: 'Negotiated price (target)', v: '$27,700', color: '#1e8a5b', weight: '700' },
+        { k: 'Doc & dealer fees', v: '+ $185', color: '#52525b', weight: '500' },
+        { k: 'Sales tax (est.)', v: '+ $2,423', color: '#52525b', weight: '500' },
+        { k: 'Title & registration', v: '+ $391', color: '#52525b', weight: '500' },
+        { k: 'First payment', v: '+ $341', color: '#52525b', weight: '500' },
       ],
       scriptLines: [
-        "RAV4 prices are running hot right now, so I know there's not much room — but this one's been listed a while. I can do $22,900 today, financing-ready.",
-        "Let's meet in the middle at $23,600 out the door and I'll sign this week.",
-        "That's above where comps sit this month, so I'll wait for the next price move — here's my number.",
+        "RAV4 prices are firm right now — I know that. This one's been on the lot 3 weeks, so I can do $26,800 today, financing lined up.",
+        "Let's meet at $27,700 out the door. That's fair on the comps and I can sign this week.",
+        "That's above where I'm seeing comparable XLEs sell, so I'll hold off — but feel free to call if the price moves.",
       ],
       checklist: [
-        'Check for the known 8-speed transmission hesitation from a stop',
-        'Confirm hybrid battery health readout at the dealer',
-        'Inspect for uneven front tire wear (alignment)',
-        'Verify Apple CarPlay / Android Auto connects cleanly',
-        'Cold-start and listen for cold-weather engine rattle',
-        'Ask for full service + accident history',
+        'Verify the 8-speed automatic doesn\'t hesitate pulling away from a stop (known issue on early 2021s)',
+        'Inspect for uneven front tire wear — common on RAV4 if alignment is off',
+        'Confirm Apple CarPlay / Android Auto connects reliably',
+        'Cold-start on a cool morning and listen for any engine rattle',
+        'Pull CarMax inspection report; ask for any service history',
+        'Check all four door seals for water intrusion',
       ],
       outreach:
-        "Hi — I'm interested in your 2020 RAV4 LE. I'm financing-ready and can come see it this week.\n\nI know RAV4s are in demand; based on comparable sales I'd be targeting about $23,600 out the door. If that works, I'd love to set up a test drive.\n\nIs it still available, and can you share service records? Thanks!",
+        "Hi — I'm interested in the 2021 RAV4 XLE at CarMax Oakland. I'm financing-ready and can come in this week.\n\nBased on comparable RAV4 XLEs in the area, I'd be targeting $27,700 out the door. If that works, I'd like to schedule a test drive.\n\nIs it still available? Thanks!",
     },
-    cx5: {
-      name: '2019 Mazda CX-5 Touring', dealer: 'Private seller · Oakland', date: 'Jul 2, 2026',
-      status: 'Sent', statusTone: 'blue', generated: 'Sent to seller · awaiting reply',
-      otdTotal: '$21,360', monthly: '$390/mo', open: '$18,900', settle: '$19,600', walk: '$20,100',
+    cx522: {
+      name: '2022 Mazda CX-5 Touring', dealer: 'Bay City Motors · Burlingame', date: 'Jul 2, 2026',
+      status: 'Sent', statusTone: 'blue', generated: 'Sent to dealer · awaiting reply',
+      otdTotal: '$25,860', monthly: '$390/mo', open: '$23,800', settle: '$24,600', walk: '$25,200',
       worksheet: [
-        { k: 'Asking price', v: '$20,400', color: '#27272a', weight: '600' },
-        { k: 'Negotiated price (target)', v: '$19,600', color: '#1e8a5b', weight: '700' },
-        { k: 'Doc & transfer fees', v: '+ $85', color: '#52525b', weight: '500' },
-        { k: 'Sales tax (est.)', v: '+ $1,715', color: '#52525b', weight: '500' },
-        { k: 'Title & registration', v: '+ $360', color: '#52525b', weight: '500' },
-        { k: 'Smog + inspection', v: '+ $60', color: '#52525b', weight: '500' },
+        { k: 'Asking price', v: '$25,200', color: '#27272a', weight: '600' },
+        { k: 'Negotiated price (target)', v: '$24,600', color: '#1e8a5b', weight: '700' },
+        { k: 'Doc & dealer fees', v: '+ $499', color: '#52525b', weight: '500' },
+        { k: 'Sales tax (est.)', v: '+ $2,151', color: '#52525b', weight: '500' },
+        { k: 'Title & registration', v: '+ $391', color: '#52525b', weight: '500' },
+        { k: 'First payment', v: '+ $219', color: '#52525b', weight: '500' },
       ],
       scriptLines: [
-        "I really like the car — it's a private sale so I'm ready to move fast. Comparable Touring trims are around $19,600. I can do $18,900 cash today.",
-        "Happy to meet at $19,600, cash in hand, and we can do the transfer this weekend.",
-        "That's a bit over what the comps support, so I'll pass for now — feel free to reach out if things change.",
+        "Comparable 2022 CX-5 Tourings are selling around $24,600. This one looks clean — I can do $23,800 today, financing ready.",
+        "Let's land at $24,600 out the door and I'll sign this week.",
+        "That's a bit over where the comps sit — I'll keep watching. Feel free to reach out if anything changes.",
       ],
       checklist: [
-        'Cold-start and check for the known cylinder-deactivation shudder',
-        'Inspect for curb rash and clear-coat peel (2019 paint issue)',
-        'Confirm all four brakes are quiet and even',
-        'Test the infotainment rotary dial and reverse camera',
-        'Check tires for matching brand and even wear',
-        'Get a pre-purchase inspection — private sale, no warranty',
+        'Test the Skyactiv-G engine cold — should start clean with no hesitation',
+        'Verify the i-Activsense suite (auto emergency braking, lane departure) activates',
+        'Check the rotary infotainment controller for smooth action',
+        'Inspect the cabin air filter and confirm HVAC blows clean',
+        'Look for any rust or bubbling near wheel arches (rare but check)',
+        'Confirm rear cross-traffic alert and blind-spot monitoring work',
       ],
       outreach:
-        "Hi — I'm interested in your 2019 CX-5 Touring. I'm a cash-ready buyer and can meet this weekend.\n\nBased on recent comparable sales, I'd be looking at around $19,600. If that works for you, I can arrange a pre-purchase inspection and close quickly.\n\nIs it still available? Happy to answer any questions. Thanks!",
+        "Hi — I'm interested in your 2022 CX-5 Touring. I'm financing-ready and can come in this week.\n\nBased on recent comparable sales, I'd be targeting around $24,600 out the door. If that works, let's set up a test drive.\n\nIs it still available? Thanks!",
     },
   };
-  const activeId = packetData[st.activePacket] ? st.activePacket : 'crv';
+  const activeId = packetData[st.activePacket] ? st.activePacket : 'crv22';
   const activePacket = packetData[activeId];
   const worksheet = activePacket.worksheet;
   const scriptLines = activePacket.scriptLines;
@@ -673,7 +641,7 @@ export function useAppView(): AppView {
 
   // packet history list
   const packetToneMap: Record<string, string> = { green: 'background:#DCFCE7;color:#15803D;', blue: 'background:#E8F0FE;color:#2563EB;', gray: 'background:#F5F1EB;color:#9C9189;' };
-  const packetOrder = ['crv', 'rav4', 'cx5'];
+  const packetOrder = ['crv22', 'rav4xle', 'cx522'];
   const packetList = packetOrder.map(id => {
     const p = packetData[id];
     return {
@@ -692,10 +660,10 @@ export function useAppView(): AppView {
     gray: 'background:#F5F1EB;color:#9C9189;',
   };
   const alertDefs: { id: string; type: string; tone: string; time: string; title: string; body: string; go: AppState['screen'] | null; cta: string | null }[] = [
-    { id: 'a1', type: 'PRICE DROP', tone: 'green', time: '2 hours ago', title: 'Price dropped on the RAV4 LE', body: 'Asking price fell from $24,200 to $23,600 (−$600) on a car you saved. Still tracking as a Fair price.', go: 'detail', cta: 'View listing' },
+    { id: 'a1', type: 'PRICE DROP', tone: 'green', time: '2 hours ago', title: 'Price dropped on the RAV4 XLE', body: 'Asking price fell from $30,800 to $29,850 (−$950) on a car you saved. Still tracking as a Fair price.', go: 'detail', cta: 'View listing' },
     { id: 'a2', type: 'MARKET SHIFT', tone: 'blue', time: 'Yesterday', title: 'Market prices shifted this week', body: 'Used prices on your shortlist rose about 8%. A certified pre-owned deal may now beat the private-party target.', go: 'replan', cta: 'See what changed' },
-    { id: 'a3', type: 'BETTER MATCH', tone: 'purple', time: '3 days ago', title: 'A better match just appeared', body: '2020 Mazda CX-5 Grand Touring — 33k mi, one owner, priced under target, scores higher than your current #1 pick.', go: 'shortlist', cta: 'Open shortlist' },
-    { id: 'a4', type: 'SOLD', tone: 'gray', time: '4 days ago', title: 'Forester listing sold', body: 'This listing is no longer available and has been removed from active tracking.', go: null, cta: null },
+    { id: 'a3', type: 'BETTER MATCH', tone: 'purple', time: '3 days ago', title: 'A better match just appeared', body: '2022 Mazda CX-5 Touring — 23k mi, one owner, priced under target, scores higher than your current #1 pick.', go: 'shortlist', cta: 'Open shortlist' },
+    { id: 'a4', type: 'SOLD', tone: 'gray', time: '4 days ago', title: 'Forester Sport listing sold', body: 'This listing is no longer available and has been removed from active tracking.', go: null, cta: null },
   ];
   const visibleAlerts = alertDefs.filter(a => !st.dismissedAlerts.includes(a.id));
   const alertList = visibleAlerts.map(a => ({
@@ -724,8 +692,8 @@ export function useAppView(): AppView {
     startIntake: () => startIntake(),
     goLanding: () => go('landing'), goIntake: () => go('intake'),
     goShortlist: () => go('shortlist'), goDetail: () => go('detail'),
-    goPacket: () => openPacket('crv', 'detail'), goPackets: () => goPackets(),
-    detailSlotSrc: carSrc('crv'),
+    goPacket: () => openPacket('crv22', 'detail'), goPackets: () => goPackets(),
+    detailSlotSrc: carSrc('crv22'),
     packetBack: () => (st.packetFrom === 'detail' ? go('detail') : goPackets()),
     packetBackLabel: st.packetFrom === 'detail' ? '← Back to listing' : '← Back to deal packets',
     packetList, packetCount: packetList.length,
@@ -789,7 +757,7 @@ export function useAppView(): AppView {
     filterSavedStyle: segBase + (st.savedFilter === 'saved' ? 'background:#fff;color:#0F766E;box-shadow:0 1px 3px rgba(0,0,0,.1);' : 'background:transparent;color:#6B6459;'),
     cmpCount, showCmpBar: cmpCount >= 1 && s === 'shortlist', cmpBarLabel: 'Compare (' + cmpCount + ')', cmpSelLabel: cmpCount + ' selected', cmpMaxHint: cmpCount >= 3,
     openCompare: () => openCompare(), clearCompare: () => clearCompare(),
-    detailSaved, detailHeartGlyph: detailSaved ? '♥' : '♡', onDetailSave: () => toggleSave('crv'), detailJustSaved: st.justSaved === 'crv',
+    detailSaved, detailHeartGlyph: detailSaved ? '♥' : '♡', onDetailSave: () => toggleSave('crv22'), detailJustSaved: st.justSaved === 'crv22',
     detailHeartStyle: 'background:none;border:1px solid ' + (detailSaved ? '#0F766E' : '#E7E2D9') + ';border-radius:10px;cursor:pointer;font-size:20px;line-height:1;padding:8px 13px;font-family:inherit;color:' + (detailSaved ? '#0F766E' : '#9C9189') + ';',
     gridCols, compareCols, fitCells, dealCells, otdCells, costCells, tradeoffCells, specRows, recText, finalizeCells,
     cmpHasCars: cmp.length > 0, cmpEmpty: cmp.length === 0, cmpCountLabel: cmp.length,
