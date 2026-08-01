@@ -15,9 +15,11 @@
     "db:seed": "prisma db seed",
     "mcp:build": "tsc --project mcp-server/tsconfig.json",
     "mcp:dev": "tsx mcp-server/src/index.ts",
-    "fetch-car-images": "tsx scripts/fetch-car-images.ts"
+    "fetch-car-images": "tsx scripts/fetch-car-images.ts",
+    "rotate-cars": "tsx scripts/rotate-car-inventory.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
     "@modelcontextprotocol/sdk": "1.26.0",
     "@prisma/client": "^6.19.3",
     "mcp-handler": "^1.1.0",
