@@ -1,11 +1,12 @@
 /**
- * Daily inventory-refresh agent.
+ * Daily inventory-growth agent.
  *
- * Asks Claude for a fresh batch of realistic Bay Area used-car listings,
- * fetches a matching photo for each from Wikipedia, rewrites the
- * `carListings` array in app/_lib/carData.ts, and prunes public/cars/
- * images for cars that rotated out. Run by .github/workflows/rotate-cars.yml
- * on a daily cron (and via `npm run rotate-cars` for a manual/local run).
+ * Asks Claude for a fresh batch of realistic Bay Area used-car listings not
+ * already in app/_lib/carData.ts, fetches a matching photo for each from
+ * Wikipedia, and appends them before the array's closing `];`. Existing
+ * entries and images are never modified or removed — the dataset only
+ * grows. Run by .github/workflows/rotate-cars.yml on a daily cron (and via
+ * `npm run rotate-cars` for a manual/local run).
  *
  * Requires ANTHROPIC_API_KEY in the environment.
  */
@@ -18,10 +19,13 @@ import Anthropic from '@anthropic-ai/sdk';
 const ROOT = process.cwd();
 const CAR_DATA_PATH = path.join(ROOT, 'app', '_lib', 'carData.ts');
 const IMAGES_DIR = path.join(ROOT, 'public', 'cars');
-const TARGET_COUNT = Number(process.env.CAR_COUNT ?? 60);
+// How many *new* cars to add today. Kept modest by default since this
+// accumulates forever — override with CAR_COUNT if you want a bigger batch.
+const NEW_CARS_PER_DAY = Number(process.env.CAR_COUNT ?? 10);
 // Ask for a few extra so cars whose image lookup fails can be dropped
-// without falling short of TARGET_COUNT.
-const REQUEST_COUNT = TARGET_COUNT + 10;
+// without falling short of NEW_CARS_PER_DAY.
+const REQUEST_COUNT = NEW_CARS_PER_DAY + 5;
+const ARRAY_CLOSE_RE = /\n\];\s*$/;
 
 const MUST_HAVE_KEYS = ['awd', 'carplay', 'backup', 'mpg', 'thirdrow', 'manual'] as const;
 
@@ -92,7 +96,17 @@ const TOOL_SCHEMA = {
   },
 };
 
-async function generateCars(): Promise<GeneratedCar[]> {
+function readExistingIds(): string[] {
+  if (!fs.existsSync(CAR_DATA_PATH)) return [];
+  const content = fs.readFileSync(CAR_DATA_PATH, 'utf8');
+  const ids: string[] = [];
+  const re = /^\s*id:\s*'([^']+)'/gm;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(content))) ids.push(m[1]);
+  return ids;
+}
+
+async function generateCars(existingIds: string[]): Promise<GeneratedCar[]> {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   const message = await client.messages.create({
@@ -107,8 +121,10 @@ async function generateCars(): Promise<GeneratedCar[]> {
           `Generate ${REQUEST_COUNT} realistic used/CPO/new car listings for a Bay Area car-buying agent app. ` +
           `Cover a genuine mix of body styles (sedans, compact/midsize/3-row SUVs, trucks, minivans, EVs, hybrids, ` +
           `a couple of luxury options), price points ($16k-$42k), and brands — no more than 2 listings sharing ` +
-          `the same make+model. Use real, currently-common used-car makes/models/trims and honest, specific ` +
-          `pros/cons/reliability notes (not generic filler). Each id must be a unique lowercase-alphanumeric slug. ` +
+          `the same make+model within this batch. Use real, currently-common used-car makes/models/trims and ` +
+          `honest, specific pros/cons/reliability notes (not generic filler). Each id must be a unique ` +
+          `lowercase-alphanumeric slug, and must NOT be any of these ids already in the dataset: ` +
+          `${existingIds.length ? existingIds.join(', ') : '(none yet)'}. ` +
           `wikiArticle should be your best guess at the exact Wikipedia article title for that car/generation.`,
       },
     ],
@@ -121,10 +137,12 @@ async function generateCars(): Promise<GeneratedCar[]> {
 
   const cars = (toolUse.input as { cars: GeneratedCar[] }).cars;
 
-  // De-dupe ids defensively in case the model slips.
+  // De-dupe against both the batch itself and the existing dataset,
+  // defensively, in case the model slips.
+  const existing = new Set(existingIds);
   const seen = new Set<string>();
   const unique = cars.filter((c) => {
-    if (!/^[a-z0-9]+$/.test(c.id) || seen.has(c.id)) return false;
+    if (!/^[a-z0-9]+$/.test(c.id) || seen.has(c.id) || existing.has(c.id)) return false;
     seen.add(c.id);
     return true;
   });
@@ -183,55 +201,6 @@ async function fetchCarImage(car: GeneratedCar): Promise<boolean> {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const IMAGIN_FN = `// Replace 'try' with your Imagin.Studio customer ID (free trial at imagin.studio)
-const IMAGIN = (make: string, model: string, year: number) =>
-  \`https://cdn.imagin.studio/getimage?customer=try&make=\${make}&modelFamily=\${model}&modelYear=\${year}&angle=side\`;
-`;
-
-const HEADER = `/**
- * Car inventory data — auto-refreshed daily by scripts/rotate-car-inventory.ts
- * (see .github/workflows/rotate-cars.yml). Do not hand-edit the listings below;
- * edit the generation prompt in that script instead — changes here get
- * overwritten by the next scheduled run.
- *
- * Fields:
- *   id        – slug used for routing and image lookup (/public/cars/<id>.jpg)
- *   fit       – 0–100 match score vs. the prototype buyer brief
- *   deal      – 'Good' | 'Fair' | 'Over' (vs. market comparables)
- *   tco       – estimated monthly total cost of ownership (insurance + gas/charging + maintenance)
- *   otd       – out-the-door asking price
- *   dealDelta – price difference vs. market (e.g. '−$800')
- *   dealComps – number of comparable listings used (e.g. '14 comps')
- *   mustHaveKeys – which mustHave keys this car satisfies (awd, carplay, backup, mpg, thirdrow, manual)
- *   tradeoff  – one-line tradeoff vs. the top pick
- */
-
-export interface CarListing {
-  id: string;
-  name: string;
-  miles: string;
-  distance: string;
-  fit: number;
-  deal: 'Good' | 'Fair' | 'Over';
-  tco: string;
-  otd: string;
-  condition: 'New' | 'Certified pre-owned' | 'Used';
-  fuelType: 'Gas' | 'Hybrid' | 'Electric';
-  dealer: string;
-  pros: string[];
-  cons: string[];
-  why: string;
-  dealDelta: string;
-  dealComps: string;
-  mustHaveKeys: string[];
-  tradeoff?: string;
-  imageUrl: string;
-}
-
-${IMAGIN_FN}
-export const carListings: CarListing[] = [
-`;
-
 function esc(s: string): string {
   return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
@@ -275,38 +244,36 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`Requesting ${REQUEST_COUNT} candidate listings...`);
-  const candidates = await generateCars();
-  console.log(`Got ${candidates.length} unique candidates. Fetching photos...`);
+  const existingIds = readExistingIds();
+  console.log(`${existingIds.length} cars already in carData.ts. Requesting ${REQUEST_COUNT} new candidates...`);
+  const candidates = await generateCars(existingIds);
+  console.log(`Got ${candidates.length} unique new candidates. Fetching photos...`);
 
   fs.mkdirSync(IMAGES_DIR, { recursive: true });
 
   const kept: GeneratedCar[] = [];
   for (const car of candidates) {
-    if (kept.length >= TARGET_COUNT) break;
+    if (kept.length >= NEW_CARS_PER_DAY) break;
     const ok = await fetchCarImage(car);
     console.log(`  ${ok ? '✓' : '✗'}  ${car.id} (${car.name})`);
     if (ok) kept.push(car);
     await sleep(400);
   }
 
-  if (kept.length < TARGET_COUNT * 0.8) {
-    console.error(`Only found photos for ${kept.length}/${TARGET_COUNT} cars — aborting without writing changes.`);
+  if (kept.length === 0) {
+    console.error('Found photos for 0 new cars — nothing to add today.');
     process.exit(1);
   }
 
-  const body = kept.map(serializeCar).join('\n');
-  fs.writeFileSync(CAR_DATA_PATH, HEADER + body + '\n];\n');
-  console.log(`Wrote ${kept.length} cars to ${path.relative(ROOT, CAR_DATA_PATH)}`);
-
-  const keepIds = new Set(kept.map((c) => c.id));
-  for (const file of fs.readdirSync(IMAGES_DIR)) {
-    const id = file.replace(/\.(jpg|svg)$/, '');
-    if (!keepIds.has(id)) {
-      fs.unlinkSync(path.join(IMAGES_DIR, file));
-      console.log(`  pruned stale image: ${file}`);
-    }
+  const content = fs.readFileSync(CAR_DATA_PATH, 'utf8');
+  if (!ARRAY_CLOSE_RE.test(content)) {
+    throw new Error(`Could not find the carListings array's closing "];" at the end of ${CAR_DATA_PATH}`);
   }
+  const newBlock = kept.map(serializeCar).join('\n');
+  const updated = content.replace(ARRAY_CLOSE_RE, `\n${newBlock}\n];\n`);
+  fs.writeFileSync(CAR_DATA_PATH, updated);
+
+  console.log(`Appended ${kept.length} new cars to ${path.relative(ROOT, CAR_DATA_PATH)} (${existingIds.length + kept.length} total).`);
 }
 
 main().catch((err) => {

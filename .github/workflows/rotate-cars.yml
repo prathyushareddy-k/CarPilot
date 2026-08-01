@@ -1,9 +1,11 @@
-# Daily inventory-refresh agent — see scripts/rotate-car-inventory.ts.
+# Daily inventory-growth agent — see scripts/rotate-car-inventory.ts.
 #
-# Calls Claude to generate a fresh batch of listings, fetches a matching
-# photo for each, rewrites app/_lib/carData.ts, and pushes straight to
-# main if anything changed. That push triggers the existing `deploy`
-# workflow, so the live site picks up the new inventory automatically.
+# Calls Claude to generate a batch of listings not already in the dataset,
+# fetches a matching photo for each, and appends them to
+# app/_lib/carData.ts — existing cars are never modified or removed, the
+# list only grows. Pushes straight to main if anything changed, which
+# triggers the existing `deploy` workflow, so the live site picks up the
+# new inventory automatically.
 #
 # Requires one repo secret: ANTHROPIC_API_KEY.
 name: rotate-cars
@@ -40,5 +42,5 @@ jobs:
             echo "No changes to commit."
             exit 0
           fi
-          git commit -m "Daily inventory refresh: $(date -u +%Y-%m-%d)"
+          git commit -m "Daily inventory growth: $(date -u +%Y-%m-%d)"
           git push
