@@ -1,6 +1,9 @@
 /**
- * Car inventory data — 12 realistic Bay Area listings sourced from
- * actual CarMax SF Bay Area inventory patterns (mid-2025 pricing).
+ * Car inventory data. scripts/rotate-car-inventory.ts appends a fresh batch
+ * of listings to the end of this array daily (see
+ * .github/workflows/rotate-cars.yml) — existing entries are never modified
+ * or removed by that job, so the list only grows. Safe to hand-edit; the
+ * daily job only ever adds new objects before the closing `];`.
  *
  * Fields:
  *   id        – slug used for routing and image lookup (/public/cars/<id>.jpg)
