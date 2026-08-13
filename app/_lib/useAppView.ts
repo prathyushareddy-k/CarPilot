@@ -1,6 +1,71 @@
 import { createElement, useEffect, useRef, useState } from 'react';
 import type { AppState, AppView } from './types';
+import type { CarListing } from './carData';
 import { carListings } from './carData';
+
+const FUEL_MAP: Record<string, string> = { ev: 'Electric', hybrid: 'Hybrid', gas: 'Gas' };
+const COND_MAP: Record<string, string> = { new: 'New', cpo: 'Certified pre-owned', used: 'Used' };
+
+function parsePriceFallback(s: string): number {
+  return parseInt(s.replace(/[$,/a-z]/gi, ''), 10) || 0;
+}
+
+function parseDistanceFallback(s: string): number {
+  const m = s.match(/(\d+)\s*mi/);
+  return m ? parseInt(m[1], 10) : 999;
+}
+
+// Client-side filter + rank applied when the API result is unavailable.
+// Mirrors the server-side logic in app/api/shortlist/route.ts.
+function applyIntakeFilters(cars: CarListing[], st: AppState): CarListing[] {
+  const monthly   = st.budgetMode === 'monthly' ? st.monthly : 0;
+  const cashTotal = st.budgetMode === 'cash'    ? st.cashTotal : 0;
+
+  function passesBudget(c: CarListing) {
+    if (monthly   > 0 && parsePriceFallback(c.tco) > monthly)   return false;
+    if (cashTotal > 0 && parsePriceFallback(c.otd) > cashTotal) return false;
+    return true;
+  }
+  function passesFuelCond(c: CarListing) {
+    if (FUEL_MAP[st.fuel] && c.fuelType !== FUEL_MAP[st.fuel])       return false;
+    if (COND_MAP[st.condition] && c.condition !== COND_MAP[st.condition]) return false;
+    return true;
+  }
+  function passesMustHaves(c: CarListing) {
+    const mh = st.mustHaves;
+    if (mh.awd      && !c.mustHaveKeys.includes('awd'))      return false;
+    if (mh.carplay  && !c.mustHaveKeys.includes('carplay'))  return false;
+    if (mh.backup   && !c.mustHaveKeys.includes('backup'))   return false;
+    if (mh.mpg      && c.fuelType !== 'Hybrid' && c.fuelType !== 'Electric') return false;
+    if (mh.thirdrow && !c.mustHaveKeys.includes('thirdrow')) return false;
+    if (mh.manual   && !c.mustHaveKeys.includes('manual'))   return false;
+    return true;
+  }
+  function passesRadius(c: CarListing) {
+    return st.radius <= 0 || parseDistanceFallback(c.distance) <= st.radius;
+  }
+
+  const rank = (arr: CarListing[]) => arr.sort((a, b) => b.fit - a.fit).slice(0, 12);
+
+  // Tier 1: all filters
+  let out = cars.filter(c => passesBudget(c) && passesFuelCond(c) && passesMustHaves(c) && passesRadius(c));
+  if (out.length) return rank(out);
+
+  // Tier 2: relax radius
+  out = cars.filter(c => passesBudget(c) && passesFuelCond(c) && passesMustHaves(c));
+  if (out.length) return rank(out);
+
+  // Tier 3: relax must-haves too
+  out = cars.filter(c => passesBudget(c) && passesFuelCond(c));
+  if (out.length) return rank(out);
+
+  // Tier 4: budget + fuel only (ignore condition)
+  out = cars.filter(c => passesBudget(c) && (!FUEL_MAP[st.fuel] || c.fuelType === FUEL_MAP[st.fuel]));
+  if (out.length) return rank(out);
+
+  // Tier 5: any car, just sort by fit
+  return rank([...cars]);
+}
 
 const initialState: AppState = {
   screen: 'landing',
@@ -39,7 +104,46 @@ const initialState: AppState = {
   customMusts: [],
   newMust: '',
   detailCarId: 'crv22',
+  liveCars: null,
 };
+
+// --- URL deep-link helpers ---
+
+function readUrlState(): Partial<AppState> {
+  if (typeof window === 'undefined') return {};
+  const p = new URLSearchParams(window.location.search);
+  const patch: Partial<AppState> = {};
+  const scr = p.get('screen') as AppState['screen'] | null;
+  if (scr && scr !== 'scanning') patch.screen = scr;
+  const bm = p.get('budgetMode');
+  if (bm === 'cash' || bm === 'monthly') patch.budgetMode = bm;
+  const mo = Number(p.get('monthly')); if (p.has('monthly') && !isNaN(mo) && mo > 0) patch.monthly = mo;
+  const ca = Number(p.get('cashTotal')); if (p.has('cashTotal') && !isNaN(ca) && ca > 0) patch.cashTotal = ca;
+  const fu = p.get('fuel'); if (fu) patch.fuel = fu;
+  const co = p.get('condition'); if (co) patch.condition = co;
+  const ra = Number(p.get('radius')); if (p.has('radius') && !isNaN(ra) && ra > 0) patch.radius = ra;
+  const us = p.get('usage'); if (us) patch.usage = us.split(',').filter(Boolean);
+  const dc = p.get('detailCarId'); if (dc) patch.detailCarId = dc;
+  const ap = p.get('activePacket'); if (ap) patch.activePacket = ap;
+  return patch;
+}
+
+function buildUrlSearch(st: AppState): string {
+  const p = new URLSearchParams();
+  if (st.screen !== 'landing' && st.screen !== 'scanning') p.set('screen', st.screen);
+  if (st.budgetMode !== initialState.budgetMode) p.set('budgetMode', st.budgetMode);
+  if (st.monthly !== initialState.monthly) p.set('monthly', String(st.monthly));
+  if (st.cashTotal !== initialState.cashTotal) p.set('cashTotal', String(st.cashTotal));
+  if (st.fuel !== 'either') p.set('fuel', st.fuel);
+  if (st.condition !== 'either') p.set('condition', st.condition);
+  if (st.radius !== initialState.radius) p.set('radius', String(st.radius));
+  const us = st.usage.join(',');
+  if (us && us !== initialState.usage.join(',')) p.set('usage', us);
+  if (st.screen === 'detail') p.set('detailCarId', st.detailCarId);
+  if (st.screen === 'packet') p.set('activePacket', st.activePacket);
+  const qs = p.toString();
+  return qs ? `?${qs}` : window.location.pathname;
+}
 
 export function useAppView(): AppView {
   const [state, setStateRaw] = useState<AppState>(initialState);
@@ -56,6 +160,19 @@ export function useAppView(): AppView {
       if (savedTRef.current) clearTimeout(savedTRef.current);
     };
   }, []);
+
+  // Hydrate state from URL on first mount
+  useEffect(() => {
+    const patch = readUrlState();
+    if (Object.keys(patch).length) setState(patch);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keep URL in sync with navigable state
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.history.replaceState(null, '', buildUrlSearch(state));
+  }, [state]);
 
   function addCustomMust() {
     setState(s => {
@@ -135,12 +252,26 @@ export function useAppView(): AppView {
   }
 
   function findCars() {
-    setState({ screen: 'scanning', scanStep: 0 });
+    setState({ screen: 'scanning', scanStep: 0, liveCars: null });
     try {
       window.scrollTo(0, 0);
     } catch {
       /* noop */
     }
+
+    // Fire real shortlist fetch; fall back to static carListings on error
+    const { budgetMode, monthly, cashTotal, fuel, condition, mustHaves, radius, usage, weights } = state;
+    fetch('/api/shortlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ budgetMode, monthly, cashTotal, fuel, condition, mustHaves, radius, usage, weights }),
+    })
+      .then(r => (r.ok ? r.json() : null))
+      .then((data: { cars: import('./carData').CarListing[] } | null) => {
+        if (data?.cars?.length) setState({ liveCars: data.cars });
+      })
+      .catch(() => { /* fall back to static carListings */ });
+
     if (scanRef.current) clearInterval(scanRef.current);
     scanRef.current = setInterval(() => {
       setState(st => {
@@ -373,7 +504,7 @@ export function useAppView(): AppView {
     return 'border-radius:999px;padding:4px 11px;font-size:12px;font-weight:700;white-space:nowrap;' + map[r];
   };
   const dealLabel: Record<string, string> = { Good: 'Good deal', Fair: 'Fair price', Over: 'Overpriced' };
-  const carData = carListings;
+  const carData = st.liveCars ?? applyIntakeFilters(carListings, st);
   const mhLabels: Record<string, string> = { awd: 'AWD', carplay: 'CarPlay', backup: 'Backup cam', mpg: '35+ mpg', thirdrow: 'Third row', manual: 'Manual' };
   const chipStyle = 'display:inline-flex;align-items:center;gap:4px;background:#E6F5F2;border:1px solid #A7D9D3;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700;color:#115E59;';
   const mkSvg = (children: string[]) =>
@@ -515,7 +646,7 @@ export function useAppView(): AppView {
   const specLabels = ['Drivetrain', 'Est. fuel', 'Safety', 'Seats', 'Open recalls'];
   const specRows = specLabels.map((lab, i) => ({ label: lab, cells: cmp.map(c => ({ v: (cspecs[c.id] ?? Array(specLabels.length).fill('—'))[i] })) }));
   const pick = cmp.length ? cmp.reduce((a, b) => (b.fit > a.fit ? b : a)) : carData[0];
-  const recText = `The ${pick.name}. You weighted reliability highest, and it's the only one here that stays under your walk-away number — top fit, a genuinely good deal, and the least to worry about after you sign.`;
+  const recText = pick ? `The ${pick.name}. You weighted reliability highest, and it's the only one here that stays under your walk-away number — top fit, a genuinely good deal, and the least to worry about after you sign.` : '';
   const finalizeCells = cmp.map(c => {
     const best = c.id === pick.id;
     return {
@@ -528,7 +659,7 @@ export function useAppView(): AppView {
     };
   });
   // ── Detail screen helpers ────────────────────────────────────────────────
-  const detailCar = carData.find(c => c.id === st.detailCarId) ?? carData[0];
+  const detailCar = carData.find(c => c.id === st.detailCarId) ?? carData[0] ?? carListings[0];
 
   function buildFitBreak(car: typeof carData[number]) {
     const n = car.name.toLowerCase();
