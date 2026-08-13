@@ -14,6 +14,7 @@ import DealPacketScreen from './_components/DealPacketScreen';
 import DealPacketsScreen from './_components/DealPacketsScreen';
 import ComponentsScreen from './_components/ComponentsScreen';
 import MobileShortlistScreen from './_components/MobileShortlistScreen';
+import ChatWidget from './_components/ChatWidget';
 
 export default function Page() {
   const v = useAppView();
@@ -59,6 +60,8 @@ export default function Page() {
           </div>
         </div>
       )}
+
+      <ChatWidget />
     </div>
   );
 }
