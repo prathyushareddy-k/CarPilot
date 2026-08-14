@@ -22,15 +22,18 @@ COPY --from=build /src/.next/standalone ./
 COPY --from=build /src/.next/static ./.next/static
 COPY --from=build /src/public ./public
 
-# Prisma: schema + migrations + generated client + CLI for `migrate deploy` at startup
+# Prisma schema/migrations + full node_modules for the `migrate deploy` CLI at
+# startup. The standalone output above only bundles the generated
+# @prisma/client, not the prisma CLI itself — and the CLI has transitive
+# dependencies (its .wasm schema engine, the `effect` package, etc.) spread
+# across more than just the prisma/@prisma folders, so copying only those
+# left it unable to run (silently, since the CMD below swallows the error).
+# Copying the whole node_modules avoids guessing which subset it needs.
 COPY --from=build /src/prisma ./prisma
-COPY --from=build /src/node_modules/prisma ./node_modules/prisma
-COPY --from=build /src/node_modules/@prisma ./node_modules/@prisma
-COPY --from=build /src/node_modules/.prisma ./node_modules/.prisma
-COPY --from=build /src/node_modules/.bin/prisma ./node_modules/.bin/prisma
+COPY --from=build /src/node_modules ./node_modules
 
 EXPOSE 3000
 # Run migrations before starting the server. If DATABASE_URL is not set or the
 # DB is unreachable, log the error but still start the server so the web UI
 # (which uses static data) stays available.
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy || echo '[startup] Prisma migration skipped — check DATABASE_URL'; exec node server.js"]
+CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy || echo '[startup] Prisma migration skipped — check DATABASE_URL'; exec node server.js"]
