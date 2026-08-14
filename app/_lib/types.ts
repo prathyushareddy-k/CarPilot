@@ -1,4 +1,5 @@
 import type { ChangeEventHandler, KeyboardEventHandler, ReactNode } from 'react';
+import type { CarListing } from './carData';
 
 export type ScreenKey =
   | 'landing'
@@ -66,6 +67,7 @@ export interface AppState {
   customMusts: string[];
   newMust: string;
   detailCarId: string;
+  liveCars: CarListing[] | null;
 }
 
 export interface OptItem {
