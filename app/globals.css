@@ -1,3 +1,34 @@
+:root {
+  /* brand (teal) */
+  --brand: #0F766E;
+  --brand-hover: #115E59;
+  --brand-surface: #E6F5F2;
+  --brand-border: #A7D9D3;
+
+  /* foreground */
+  --fg: #1C1A17;
+  --fg-muted: #6B6459;
+  --fg-faint: #9C9189;
+
+  /* surfaces */
+  --bg: #ffffff;
+  --surface-card: #F5F1EB;
+  --surface: #FBF8F3;
+  --border: #E7E2D9;
+
+  /* semantic states */
+  --success: #15803D;
+  --success-surface: #DCFCE7;
+  --success-border: #BBF7D0;
+  --destructive: #B91C1C;
+  --destructive-surface: #FEE2E2;
+  --destructive-border: #FECACA;
+
+  /* shadows */
+  --shadow-md: 0 4px 18px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 10px 34px rgba(0, 0, 0, 0.18);
+}
+
 * {
   box-sizing: border-box;
 }
